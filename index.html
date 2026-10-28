@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>큰빛 학생 프로그램</title>
+<title>가르침에듀 고교학점제</title>
 <style>
 :root{--bg:#f5f6fa;--card:#fff;--ink:#1d2433;--mute:#667085;--line:#e2e5ee;--pri:#3b5bdb;--pri-soft:#edf0ff;--ok:#2b8a3e;--ok-soft:#e9f7ec;--warn:#c92a2a;--warn-soft:#fdecec;--amber:#b36b00;--amber-soft:#fff4e0}
 *{box-sizing:border-box}
@@ -113,7 +113,7 @@ textarea.wr{font-family:inherit;font-size:15px;min-height:140px;line-height:1.65
 </head>
 <body>
 <header class="top">
-  <h1 id="ttl">큰빛 학생 프로그램</h1>
+  <h1 id="ttl">가르침에듀 고교학점제</h1>
   <span id="saveBadge" class="badge b-gray noprint" style="display:none"></span>
   <span id="modeBadge" class="badge b-gray noprint"></span>
   <span id="verBadge" class="note noprint"></span>
@@ -138,11 +138,12 @@ textarea.wr{font-family:inherit;font-size:15px;min-height:140px;line-height:1.65
    v1.4 반·번호 드롭다운, 학교·반별 PDF 합본/ZIP/명단 CSV
    v1.5 명단 CSV 선택과목 학기별 칸 분리
    v1.6 서버 연결 실패 시 제출 차단
+   v2.1 이름을 가르침에듀 고교학점제로 변경(화면 문구·파일명·버전)
    v2.0 첫 화면에서 탐구보고서·고교학점제 선택(학생 로그인 없음), 탐구보고서 작성 마법사(서론·본론·결론·자기평가서),
         고교학점제: 시·군·구 세부 지역, 희망고 3순위를 첫 화면에 입력, 자유선택(학기별 교과명 직접 입력),
         모든 단계 기기 자동 저장·이어쓰기, PDF·이미지(사진첩) 저장, 관리자 필터 검색·다운로드(두 프로그램),
         관리자 암호는 소스에 두지 않고 처음 사용 시 설정 */
-const APP_VERSION = "v2.0";
+const APP_VERSION = "v2.1";
 const CFG = {
   firebase: null,
   /* 예) firebase: { apiKey:"...", authDomain:"...", projectId:"...", appId:"..." }, */
@@ -453,7 +454,7 @@ function render() {
   if (S.imgs) $("#app").insertAdjacentHTML("beforeend", imgModal());
 }
 function renderHome() {
-  $("#ttl").textContent = "큰빛 학생 프로그램";
+  $("#ttl").textContent = "가르침에듀 고교학점제";
   const dr = Draft.load("rpt"), dh = Draft.load("hak");
   const tag = d => d && !d.submitted ? `<div class="badge b-amber" style="margin-bottom:10px">작성 중인 내용이 있습니다 · ${fmtDT(d.savedAt)}</div>` : d ? `<div class="badge b-ok" style="margin-bottom:10px">제출 완료 · ${fmtDT(d.savedAt)}</div>` : "";
   $("#app").innerHTML = `
