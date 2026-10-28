@@ -80,6 +80,40 @@ td .tag.common{background:var(--pri-soft);color:var(--pri);font-weight:600}
 .pdfbox .card{border:none;padding:0;margin:0 0 10px;border-radius:0}
 details{border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin-bottom:8px;background:#fff}
 summary{cursor:pointer;font-weight:600}
+
+/* ---- 모바일·태블릿 ---- */
+header.top{flex-wrap:wrap;row-gap:6px}
+header.top h1{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.badge{white-space:nowrap}
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tw table{min-width:520px}
+.tag,.opt,td,th{word-break:keep-all;overflow-wrap:anywhere}
+input,select,textarea{font-size:16px;min-height:42px}
+button{min-height:38px}
+.pdfbox .tw{overflow:visible}.pdfbox .tw table{min-width:0}
+.inapp{background:#fff4e0;border:1px solid #f1c27a;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:14px}
+.inapp b{color:#b36b00}
+@media(max-width:900px){main{padding:16px 14px 70px}.hero{grid-template-columns:1fr}}
+@media(max-width:640px){
+  #verBadge{display:none}
+  header.top h1{flex:1 1 60%}
+  header.top{padding:8px 12px}
+  #modeBadge{order:5}
+  #saveBadge{font-size:11px}
+  .rank{flex-wrap:wrap;gap:4px}.rank b{width:100%}
+  .row>*{min-width:140px}
+  .sticky-save{position:static!important;background:none!important;padding:10px 0!important}
+  .sticky-save>span{width:100%}.sticky-save button{flex:1 1 44%}
+  .tw table th:first-child{width:64px!important;font-size:12.5px;position:sticky;left:0;background:#f8f9fc;z-index:1}
+  .tw table{min-width:560px}
+  .tw table.cr{min-width:0}
+  .tw table{font-size:13px}
+  .steps span{font-size:12px;padding:5px 9px}
+  .modal-in{padding:14px}
+  .imgs img{height:200px}
+}
+@media(min-width:641px) and (max-width:1100px){main{max-width:820px}.tw table{min-width:0}}
+.swipe{display:none}@media(max-width:640px){.swipe{display:block}}
 @media print{
   header.top,.steps,.noprint,button{display:none!important}
   body{background:#fff}
@@ -106,6 +140,11 @@ textarea.wr{font-family:inherit;font-size:15px;min-height:140px;line-height:1.65
 .imgs{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px}
 .imgs img{height:240px;border:1px solid var(--line);border-radius:6px;background:#fff}
 .sticky-save{position:sticky;bottom:0;background:linear-gradient(transparent,var(--bg) 30%);padding:14px 0 6px}
+.pg{margin-bottom:16px}
+.pg2 h3{font-size:15px;margin:0 0 4px}
+.cr td{font-size:13px}
+.tag.core{background:#fff0f0;color:#c92a2a;font-weight:600}
+.tag.rec{background:#fff7e0;color:#b36b00;font-weight:600}
 .fbar{display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin-bottom:6px}
 .fbar>div{flex:1;min-width:130px}
 @media(max-width:640px){main{padding:14px 12px 80px}.card{padding:16px}header.top{padding:10px 12px}header.top h1{font-size:15px}}
@@ -138,12 +177,15 @@ textarea.wr{font-family:inherit;font-size:15px;min-height:140px;line-height:1.65
    v1.4 반·번호 드롭다운, 학교·반별 PDF 합본/ZIP/명단 CSV
    v1.5 명단 CSV 선택과목 학기별 칸 분리
    v1.6 서버 연결 실패 시 제출 차단
+   v2.4 모바일·태블릿 화면 최적화, 휴대폰 PDF·이미지 저장(공유·다운로드 창), 카카오톡 등 앱 안 화면 안내
+   v2.3 다른 지역 학교도 이름 검색으로 희망 학교에 추가
+   v2.2 결과지 1쪽(비교표)·2쪽(안 고른 핵심·권장과목)으로 쪽 나누기, 희망 계열·학과 선택, 이미지는 쪽 단위로 저장
    v2.1 이름을 가르침에듀 고교학점제로 변경(화면 문구·파일명·버전)
    v2.0 첫 화면에서 탐구보고서·고교학점제 선택(학생 로그인 없음), 탐구보고서 작성 마법사(서론·본론·결론·자기평가서),
         고교학점제: 시·군·구 세부 지역, 희망고 3순위를 첫 화면에 입력, 자유선택(학기별 교과명 직접 입력),
         모든 단계 기기 자동 저장·이어쓰기, PDF·이미지(사진첩) 저장, 관리자 필터 검색·다운로드(두 프로그램),
         관리자 암호는 소스에 두지 않고 처음 사용 시 설정 */
-const APP_VERSION = "v2.1";
+const APP_VERSION = "v2.4";
 const CFG = {
   firebase: null,
   /* 예) firebase: { apiKey:"...", authDomain:"...", projectId:"...", appId:"..." }, */
@@ -350,8 +392,36 @@ function sampleSchools() {
     mk("샘플고등학교 C (예시)", "서울", "강남", true, "특목고", c)];
 }
 
+/* ---------- 핵심·권장과목 (2028학년도 모집단위별 반영과목 자료집 1부 집계) ----------
+   n = 해당 모집단위를 발표한 대학 행 수, c = 과목별 반영 대학 수(subj 순서).
+   반영 비율 60% 이상 = 핵심, 40~59% = 권장. 대학 수가 10 미만이면 표시하지 않습니다. */
+const CORE = {"tracks":{"인문":["영어영문","철학"],"사회":["경영","심리"],"교육":["국어교육","수학교육"],"자연(이학)":["생명과학","물리","화학"],"공학":["기계공학","컴퓨터공학"],"의약":["약학","의예"],"예체능":["시각디자인","음악","체육"]},"depts":{"영어영문":{"n":14,"c":[3,5,4,3,3,2,2,2,2]},"철학":{"n":12,"c":[2,2,3,2,2,2,2,2,2]},"경영":{"n":21,"c":[11,12,13,9,7,3,4,3,2]},"심리":{"n":12,"c":[5,7,5,2,2,2,2,2,2]},"국어교육":{"n":13,"c":[3,3,2,2,2,1,1,1,1]},"수학교육":{"n":15,"c":[11,12,12,14,14,6,5,5,5]},"생명과학":{"n":18,"c":[9,9,11,12,9,7,15,17,4]},"물리":{"n":20,"c":[14,13,14,17,16,19,11,6,5]},"화학":{"n":23,"c":[14,15,16,16,13,14,22,14,7]},"기계공학":{"n":24,"c":[15,15,18,22,20,21,16,9,9]},"컴퓨터공학":{"n":35,"c":[24,24,27,30,26,23,20,19,15]},"약학":{"n":12,"c":[7,7,7,9,7,3,10,10,1]},"의예":{"n":19,"c":[13,13,13,16,13,8,14,16,5]},"시각디자인":{"n":6,"c":[1,1,1,1,1,2,1,1,1]},"음악":{"n":2,"c":[1,1,1,1,1,1,1,1,1]},"체육":{"n":5,"c":[1,1,3,3,3,3,3,3,3]}},"subj":["대수","확률과통계","미적분Ⅰ","미적분Ⅱ","기하","물리학","화학","생명과학","지구과학"]};
+const CORE_SHOW = { core: 0.6, rec: 0.4, minN: 10 };
+const subjKey = s => String(s || "").replace(/\s/g, "").replace(/Ⅱ|II/g, "2").replace(/Ⅰ|I/g, "1");
+const SUBJ_LABEL = { "확률과통계": "확률과 통계" };
+function coreFor(track, dept) {
+  if (!track || !CORE.tracks[track]) return null;
+  const ds = dept && CORE.tracks[track].includes(dept) ? [dept] : CORE.tracks[track];
+  let n = 0; const c = CORE.subj.map(() => 0);
+  ds.forEach(d => { const x = CORE.depts[d]; n += x.n; x.c.forEach((v, i) => c[i] += v); });
+  const label = dept && ds.length === 1 ? `${track} · ${dept}` : `${track} 계열 전체`;
+  if (n < CORE_SHOW.minN) return { label, n, core: [], rec: [], thin: true };
+  const pick = (lo, hi) => CORE.subj.filter((_, i) => c[i] / n >= lo && c[i] / n < hi).map(k => SUBJ_LABEL[k] || k);
+  return { label, n, core: pick(CORE_SHOW.core, 2), rec: pick(CORE_SHOW.rec, CORE_SHOW.core), thin: false };
+}
+/* 한 순위(학교 또는 자유선택)에서 핵심·권장과목 중 아직 안 고른 과목 */
+function coreMissing(e, info) {
+  const taken = new Set(), offered = {};
+  if (e.free) ["2-1", "2-2", "3-1", "3-2"].forEach(k => freeNames(e.ri, k).forEach(n => taken.add(subjKey(n))));
+  else {
+    (e.sc.fixed || []).forEach(f => taken.add(subjKey(f.name)));
+    (e.sc.slots || []).forEach((sl, i) => { const sel = S.sel[e.sc.id]?.[i] || []; sl.options.forEach(o => { const k = subjKey(o.name); if (sel.includes(o.name)) taken.add(k); else (offered[k] = offered[k] || []).push(`${sl.g}-${sl.s}`); }); });
+  }
+  const one = names => { const miss = [], none = []; names.forEach(n => { const k = subjKey(n); if (taken.has(k)) return; if (e.free) miss.push({ n }); else if (offered[k]) miss.push({ n, at: [...new Set(offered[k])].join(", ") }); else none.push(n); }); return { miss, none }; };
+  return { core: one(info.core), rec: one(info.rec) };
+}
 /* ---------- 상태 ---------- */
-const newStu = () => ({ name: "", school: "", grade: "중3", ban: "", no: "", sido: "", sigungu: "", track: "", major: "" });
+const newStu = () => ({ name: "", school: "", grade: "중3", ban: "", no: "", sido: "", sigungu: "", track: "", dept: "", major: "" });
 const newRpt = () => ({ school: "", grade: "", ban: "", no: "", name: "", title: "", purpose: "", need: "", method: "", body: "", summary: "", learned: "", followup: "", motive: "", process: "", result: "" });
 const S = {
   view: "home", prog: null, step: 1, tab: 0,
@@ -417,21 +487,6 @@ function calc(sc) {
   const need = sc.totalCredits ?? 192;
   return { fixedCr, selCr, act, total, need, diff: total - need, issues, chosen, done: issues.length === 0 };
 }
-function careerHits(sc) {
-  const map = parseCareers(S.careersText);
-  const kw = map[S.stu.track] || [];
-  if (!kw.length) return null;
-  const c = calc(sc);
-  const hit = o => kw.some(k => o.name.includes(k));
-  const matched = c.chosen.filter(hit);
-  const missed = [];
-  (sc.slots || []).forEach((sl, i) => {
-    const sel = S.sel[sc.id]?.[i] || [];
-    sl.options.filter(o => hit(o) && !sel.includes(o.name)).forEach(o => missed.push({ ...o, g: sl.g, s: sl.s, slot: sl.label }));
-  });
-  const totalHit = (sc.slots || []).reduce((a, sl) => a + sl.options.filter(hit).length, 0);
-  return { matched, missed, kw, totalHit };
-}
 const stuIdText = x => x.ban ? `${x.grade ? x.grade + " " : ""}${x.ban}반 ${x.no}번` : (x.sno ? `학번 ${x.sno}` : "");
 /* 순위별 선택 항목: 학교 또는 자유선택 */
 function entries() {
@@ -458,6 +513,7 @@ function renderHome() {
   const dr = Draft.load("rpt"), dh = Draft.load("hak");
   const tag = d => d && !d.submitted ? `<div class="badge b-amber" style="margin-bottom:10px">작성 중인 내용이 있습니다 · ${fmtDT(d.savedAt)}</div>` : d ? `<div class="badge b-ok" style="margin-bottom:10px">제출 완료 · ${fmtDT(d.savedAt)}</div>` : "";
   $("#app").innerHTML = `
+  ${inAppBanner()}
   <div class="card"><h2>무엇을 할까요?</h2><p class="sub" style="margin:0">로그인 없이 바로 시작합니다. 작성하는 내용은 이 기기에 자동으로 저장되어, 앱이 꺼져도 다시 접속하면 이어서 쓸 수 있습니다.</p></div>
   <div class="hero">
     <div class="pcard" data-act="go-rpt"><h2>탐구보고서</h2><p>서론 · 본론 · 결론 · 자기평가서를<br>차례로 작성하고 PDF·이미지로 저장합니다.</p>${tag(dr)}<button class="pri">${dr && !dr.submitted ? "이어서 작성" : "시작하기"}</button></div>
@@ -492,18 +548,20 @@ function hakInfo() {
   const localAll = S.schools.filter(x => sameRegion(x, st));
   const nationAll = S.schools.filter(x => x.nationwide && !sameRegion(x, st));
   const local = localAll.filter(m), nation = S.filter.nation ? nationAll.filter(m) : [];
-  const shown = new Set(local.concat(nation).map(x => x.id));
+  const other = q ? S.schools.filter(x => !sameRegion(x, st) && !(x.nationwide && S.filter.nation) && x.name.includes(q)) : [];
+  const shown = new Set(local.concat(nation, other).map(x => x.id));
   const opt = r => {
     const cur = S.ranks[r];
     const extra = S.schools.filter(x => x.id === cur && !shown.has(x.id));
     const mk = arr => arr.map(x => schoolOpt(x, cur === x.id)).join("");
     return `<option value="">- 선택 -</option>` +
       (local.length ? `<optgroup label="내 지역 · ${esc(sidoName(st.sido))} ${esc(st.sigungu)}">${mk(local)}</optgroup>` : "") +
-      (nation.length ? `<optgroup label="전국 단위 모집 · 광역 자사고 등">${mk(nation)}</optgroup>` : "") + mk(extra) +
+      (nation.length ? `<optgroup label="전국 단위 모집 · 광역 자사고 등">${mk(nation)}</optgroup>` : "") +
+      (other.length ? `<optgroup label="다른 지역 · 검색 결과">${mk(other)}</optgroup>` : "") + mk(extra) +
       `<optgroup label="학교를 정하지 못했다면"><option value="${FREE}" ${isFree(cur) ? "selected" : ""}>자유선택 (학기별 교과명 직접 입력)</option></optgroup>`;
   };
   const dup = rankDup(), n = entries().length;
-  const tracks = Object.keys(parseCareers(S.careersText));
+  const tracks = Object.keys(CORE.tracks), depts = st.track ? CORE.tracks[st.track] || [] : [];
   return `<div class="card"><h2>기본 정보</h2>${noticeCard}
     <div class="row"><div><label>이름 (필수)</label><input data-f="name" value="${esc(st.name)}" placeholder="홍길동" autocomplete="off"></div>
     <div><label>현재 재학 중인 학교 (필수)</label><input data-f="school" value="${esc(st.school)}" placeholder="예: 원주중학교" autocomplete="off"></div></div>
@@ -513,14 +571,16 @@ function hakInfo() {
     <div class="row"><div><label>거주 지역 · 시·도 (필수)</label><select data-f="sido"><option value="">선택</option>${SIDO.map(x => `<option value="${x}" ${st.sido === x ? "selected" : ""}>${SIDO_FULL[x]}</option>`).join("")}</select></div>
     <div><label>시·군·구 (필수)</label><select data-f="sigungu" ${st.sido ? "" : "disabled"}>${optSel(sgOf(st.sido), st.sigungu, st.sido ? "선택" : "시·도를 먼저 고르세요")}</select></div></div></div>
   <div class="card"><h2>희망 고등학교 3순위</h2>
-    <p class="sub">내 지역(${esc(st.sido ? sidoName(st.sido) + " " + st.sigungu : "지역 선택 전")}) 학교 ${localAll.length}곳${nationAll.length ? ` · 지역과 상관없이 고를 수 있는 전국 단위 모집 학교 ${nationAll.length}곳` : ""}. 아직 정하지 못한 순위는 '자유선택'을 고르면 직접 과목명을 적을 수 있습니다.</p>
-    <div class="row noprint" style="align-items:end"><div><label>학교 이름으로 찾기</label><input data-flt="q" value="${esc(S.filter.q)}" placeholder="학교 이름 일부"></div>
+    <p class="sub">내 지역(${esc(st.sido ? sidoName(st.sido) + " " + st.sigungu : "지역 선택 전")}) 학교 ${localAll.length}곳${nationAll.length ? ` · 지역과 상관없이 고를 수 있는 전국 단위 모집 학교 ${nationAll.length}곳` : ""}. 다른 지역 학교는 아래 검색칸에 학교 이름을 넣으면 목록에 나타납니다. 아직 정하지 못한 순위는 '자유선택'을 고르면 직접 과목명을 적을 수 있습니다.</p>
+    <div class="row noprint" style="align-items:end"><div><label>다른 지역 학교 찾기 (학교 이름 검색)</label><input data-flt="q" value="${esc(S.filter.q)}" placeholder="예: 한일고, 민족사관"></div>
     <div style="flex:0 0 auto;padding-bottom:9px"><label class="chk" style="margin:0"><input type="checkbox" data-flt="nation" ${S.filter.nation ? "checked" : ""}> 전국 단위 모집 학교도 보기</label></div></div>
     <div style="margin-top:14px">${[0, 1, 2].map(r => `<div class="rank"><b>${r + 1}순위</b><select data-rank="${r}">${opt(r)}</select></div>`).join("")}</div>
     ${dup ? `<div class="msg warn">같은 학교가 두 번 선택되었습니다.</div>` : ""}
     ${st.sido && st.sigungu && !localAll.length && !nationAll.length ? `<div class="msg info">이 지역에 등록된 학교가 아직 없습니다. 자유선택으로 진행하거나 상담 선생님께 문의하세요.</div>` : ""}</div>
-  <div class="card"><h2>희망 진로 (선택)</h2><div class="row"><div><label>희망 계열</label><select data-f="track"><option value="">선택 안 함</option>${tracks.map(t => `<option ${st.track === t ? "selected" : ""}>${esc(t)}</option>`).join("")}</select></div>
-    <div><label>희망 학과·직업 (자유 입력)</label><input data-f="major" value="${esc(st.major)}" placeholder="예: 컴퓨터공학, 간호사"></div></div>
+  <div class="card"><h2>희망 진로 (선택)</h2><p class="sub">계열과 학과를 고르면 결과지 2쪽에 '대학이 많이 반영하는 수학·과학 과목 중 아직 안 고른 과목'이 나옵니다.</p>
+    <div class="row"><div><label>희망 계열</label><select data-f="track"><option value="">선택 안 함</option>${tracks.map(t => `<option ${st.track === t ? "selected" : ""}>${esc(t)}</option>`).join("")}</select></div>
+    <div><label>희망 학과</label><select data-f="dept" ${st.track ? "" : "disabled"}><option value="">${st.track ? "계열 전체" : "계열을 먼저 고르세요"}</option>${depts.map(t => `<option ${st.dept === t ? "selected" : ""}>${esc(t)}</option>`).join("")}</select></div></div>
+    <label>희망 직업·학과 (자유 입력, 선택)</label><input data-f="major" value="${esc(st.major)}" placeholder="예: 간호사, 소프트웨어 개발자">
     <p style="text-align:right;margin-top:16px"><button class="pri" data-act="hnext" ${infoOk() ? "" : "disabled"}>과목 선택하러 가기</button></p></div>`;
 }
 const rankName = e => e.free ? "자유선택" : e.sc.name;
@@ -579,27 +639,38 @@ function resultHTML() {
   const stat = c => c.done && c.diff === 0 ? `<span class="badge b-ok">충족</span>` : !c.done ? `<span class="badge b-amber">선택 미완료</span>` : c.diff > 0 ? `<span class="badge b-warn">${c.diff}학점 초과</span>` : `<span class="badge b-warn">${-c.diff}학점 부족</span>`;
   const common = Object.entries(cnt).filter(([, v]) => v > 1).sort((a, b) => b[1] - a[1]);
   const na = '<span class="note">학점 검증 없음</span>';
-  let html = `<div class="card"><h2 style="font-size:20px">고교학점제 교과선택 시뮬레이션 결과지</h2>
+  let html = `<div class="pg pg1"><div class="card"><h2 style="font-size:20px">고교학점제 교과선택 시뮬레이션 결과지</h2>
     <p style="margin:4px 0 2px"><b>${esc(S.stu.name)}</b> · ${esc(S.stu.school)} · ${esc(stuIdText(S.stu))}${S.stu.sido ? " · 거주 " + esc(sidoName(S.stu.sido)) + " " + esc(S.stu.sigungu) : ""} <span class="note">(${S.stu.date || new Date().toLocaleDateString("ko-KR")})</span></p>
-    <p class="sub">${S.stu.track ? "희망 계열: " + esc(S.stu.track) : ""} ${S.stu.major ? " · 희망 학과·직업: " + esc(S.stu.major) : ""}</p>
-    <table><tr><th style="width:110px">구분</th>${th}</tr>${rows}
+    <p class="sub">${S.stu.track ? "희망 계열: " + esc(S.stu.track) + (S.stu.dept ? " · " + esc(S.stu.dept) : "") : ""} ${S.stu.major ? " · 희망 직업·학과: " + esc(S.stu.major) : ""}</p>
+    <p class="note noprint swipe" style="margin:0 0 4px">표가 길면 옆으로 밀어서 볼 수 있습니다.</p><div class="tw"><table><tr><th style="width:110px">구분</th>${th}</tr>${rows}
     <tr><th>선택 과목 학점</th>${cols.map(c => `<td>${c.free ? na : c.c.selCr + "학점"}</td>`).join("")}</tr>
     <tr><th>총 이수학점</th>${cols.map(c => `<td>${c.free ? na : c.c.total + " / " + c.c.need}</td>`).join("")}</tr>
-    <tr><th>학점 검증</th>${cols.map(c => c.free ? `<td>${na}</td>` : `<td>${stat(c.c)}${c.c.issues.length ? "<div class='note' style='margin-top:4px'>" + c.c.issues.map(esc).join("<br>") + "</div>" : ""}</td>`).join("")}</tr></table>
-    <p class="note" style="margin-top:8px">파란 표시는 둘 이상의 순위에서 함께 고른 과목입니다.${common.length ? " 공통 선택: " + common.map(([n, v]) => `${esc(n)}(${v}곳)`).join(", ") : ""}</p></div>`;
-  if (S.stu.track && cols.some(c => !c.free)) {
-    html += `<div class="card"><h2>희망 계열(${esc(S.stu.track)})과 이어지는 과목</h2>
-      <p class="sub">계열별 키워드는 과목명 일치 기준의 참고용이며, 지원하려는 대학·학과의 권장과목 안내를 별도로 확인해야 합니다.</p>
-      <table><tr><th style="width:110px">학교</th><th>선택한 연계 과목</th><th>선택하지 않은 연계 과목</th></tr>
-      ${cols.filter(c => !c.free).map(c => { const h = careerHits(c.sc); return h ? `<tr><th>${esc(c.sc.name)}</th><td>${h.matched.length ? h.matched.map(o => `<span class="tag common">${esc(o.name)}</span>`).join("") : '<span class="note">없음</span>'}<div class="note">개설 ${h.totalHit}과목 중 ${h.matched.length}과목 선택</div></td><td>${h.missed.length ? h.missed.map(o => `<span class="tag">${esc(o.name)} (${o.g}-${o.s})</span>`).join("") : '<span class="note">없음</span>'}</td></tr>` : ""; }).join("")}</table></div>`;
-  }
+    <tr><th>학점 검증</th>${cols.map(c => c.free ? `<td>${na}</td>` : `<td>${stat(c.c)}${c.c.issues.length ? "<div class='note' style='margin-top:4px'>" + c.c.issues.map(esc).join("<br>") + "</div>" : ""}</td>`).join("")}</tr></table></div>
+    <p class="note" style="margin-top:8px">파란 표시는 둘 이상의 순위에서 함께 고른 과목입니다.${common.length ? " 공통 선택: " + common.map(([n, v]) => `${esc(n)}(${v}곳)`).join(", ") : ""}</p></div></div>`;
+  html += page2HTML();
   return html;
+}
+/* 결과지 2쪽: 대학이 많이 반영하는 수학·과학 과목 중 아직 안 고른 과목 */
+function page2HTML() {
+  const info = coreFor(S.stu.track, S.stu.dept);
+  if (!info) return "";
+  const src = `<p class="note" style="margin-top:10px">출처: 2028학년도 모집단위별 반영과목 및 대학별 권장과목 자료집(대입정보포털 어디가 탑재 자료 2025. 9. 30. 기준)의 1부에서, ${esc(info.label)}의 대학 발표 ${info.n}건(캠퍼스·모집단위 단위)에서 수학·과학 반영 과목을 집계했습니다. 발표 건의 60% 이상이 반영하면 핵심, 40~59%면 권장으로 나눴습니다. 필수 기준이 아니므로 지원할 대학의 안내를 꼭 확인하세요.</p>`;
+  const head = `<div class="pg pg2"><div class="card"><h2 style="font-size:19px">핵심·권장과목 점검</h2><p class="sub" style="margin:0 0 10px"><b>${esc(S.stu.name)}</b> · 희망 ${esc(info.label)}</p>`;
+  if (info.thin || (!info.core.length && !info.rec.length)) return head + `<div class="msg info">이 계열·학과는 발표 대학이 적거나 수학·과학에서 대학 다수가 공통으로 반영하는 과목이 뚜렷하지 않아 표시할 과목이 없습니다. 국어·영어·사회 과목과 대학별 안내를 확인하세요.</div>` + src + `</div></div>`;
+  const tag = (m, cls) => m.map(x => `<span class="tag ${cls}">${esc(x.n)}${x.at ? ` (${x.at})` : ""}</span>`).join("");
+  const rows = entries().map(e => {
+    const r = coreMissing(e, info);
+    const cell = (x, cls, empty) => `${x.miss.length ? tag(x.miss, cls) : `<span class="note">${empty}</span>`}${x.none.length ? `<div class="note" style="margin-top:3px">이 학교에 없는 과목: ${x.none.map(esc).join(", ")}</div>` : ""}`;
+    return `<tr><th style="width:96px">${e.r}순위<br>${esc(rankName(e))}</th><td>${info.core.length ? cell(r.core, "core", "모두 선택했거나 해당 없음") : '<span class="note">-</span>'}</td><td>${info.rec.length ? cell(r.rec, "rec", "모두 선택했거나 해당 없음") : '<span class="note">-</span>'}</td></tr>`;
+  }).join("");
+  return head + `<p class="note" style="margin:0 0 8px">핵심: ${info.core.map(esc).join(", ") || "-"} / 권장: ${info.rec.map(esc).join(", ") || "-"}<br>아래에는 이 중 <b>선택하지 않은 과목</b>만 보여 줍니다. 괄호는 개설 학기입니다.</p>
+    <div class="tw"><table class="cr"><tr><th>학교</th><th>핵심과목 중 안 고른 과목</th><th>권장과목 중 안 고른 과목</th></tr>${rows}</table></div>${src}</div></div>`;
 }
 const exportBar = (submitLabel, saved) => `<div class="noprint sticky-save" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between">
     <span style="display:flex;gap:8px;flex-wrap:wrap"><button data-act="${S.view === "rpt" ? "rprev" : "hprev"}">이전</button><button class="danger" data-act="restart">처음부터 다시</button></span>
     <span style="display:flex;gap:8px;flex-wrap:wrap"><button data-act="submit" ${saved ? "disabled" : ""}>${saved ? "제출 완료" : submitLabel}</button><button data-act="print">인쇄</button><button data-act="my-img">이미지 저장</button><button class="pri" data-act="my-pdf">PDF 저장</button></span></div>`;
 function hakResult() {
-  return resultHTML() + exportBar("상담 선생님께 제출", S.saved);
+  return (S.stu.track ? "" : `<div class="msg info noprint">희망 계열을 고르면 결과지 2쪽에 '핵심·권장과목 중 아직 안 고른 과목'이 나옵니다. 이전 단계로 돌아가 '희망 진로'에서 고를 수 있습니다.</div>`) + resultHTML() + exportBar("상담 선생님께 제출", S.saved);
 }
 
 /* ---------- 탐구보고서 ---------- */
@@ -647,23 +718,45 @@ function rptFinal() {
 const paras = t => String(t || "").trim() ? String(t).split(/\n+/).map(p => `<p class="para">${esc(p)}</p>`).join("") : '<p class="para blank">(작성하지 않음)</p>';
 function rptHTML(r) {
   const idt = [r.grade, r.ban ? r.ban + "반" : "", r.no ? r.no + "번" : ""].filter(Boolean).join(" ");
-  return `<div class="rsec"><h2 class="rtit">탐구보고서</h2>
+  return `<div class="rsec"><div class="pg"><h2 class="rtit">탐구보고서</h2>
   <table><tr><th style="width:90px">학교</th><td>${esc(r.school)}</td><th style="width:90px">학년·반·번호</th><td>${esc(idt)}</td></tr>
   <tr><th>이름</th><td>${esc(r.name)}</td><th>작성일</th><td>${esc(r.date || new Date().toLocaleDateString("ko-KR"))}</td></tr>
   <tr><th>탐구 주제</th><td colspan="3">${esc(r.title)}</td></tr></table>
   <h3>Ⅰ. 서론</h3><h4>1. 탐구의 목적</h4>${paras(r.purpose)}<h4>2. 탐구의 필요성</h4>${paras(r.need)}<h4>3. 탐구 방법</h4>${paras(r.method)}
   <h3>Ⅱ. 본론 (탐구 내용)</h3>${paras(r.body)}
   <h3>Ⅲ. 결론</h3><h4>1. 요약</h4>${paras(r.summary)}<h4>2. 내가 알게 된 내용 및 용어 정리</h4>${paras(r.learned)}<h4>3. 추후 연계 활동</h4>${paras(r.followup)}
-  <h3 style="page-break-before:always;break-before:page">자기평가서</h3><h4>1. 동기</h4>${paras(r.motive)}<h4>2. 과정</h4>${paras(r.process)}<h4>3. 결과</h4>${paras(r.result)}</div>`;
+  </div><div class="pg pg2"><h3>자기평가서</h3><h4>1. 동기</h4>${paras(r.motive)}<h4>2. 과정</h4>${paras(r.process)}<h4>3. 결과</h4>${paras(r.result)}</div></div>`;
 }
 
 /* ---------- 이미지 저장 (사진첩) ---------- */
+const UA = navigator.userAgent || "";
+const IN_APP = /KAKAOTALK|NAVER\(inapp|Instagram|FBAN|FBAV|DaumApps|Line\/|; wv\)/i.test(UA);
+const IS_ANDROID = /Android/i.test(UA), IS_IOS = /iPhone|iPad|iPod/i.test(UA);
+const TOUCH = (window.matchMedia && matchMedia("(pointer:coarse)").matches) || IN_APP;
+function openExternal() {
+  const u = location.href;
+  if (/KAKAOTALK/i.test(UA)) location.href = "kakaotalk://web/openExternal?url=" + encodeURIComponent(u);
+  else if (IS_ANDROID) location.href = "intent://" + u.replace(/^https?:\/\//, "") + "#Intent;scheme=https;package=com.android.chrome;end";
+  else copyLink();
+}
+async function copyLink() { try { await navigator.clipboard.writeText(location.href); alert("주소를 복사했습니다. 사파리나 크롬 주소창에 붙여 넣어 열어 주세요."); } catch (e) { prompt("이 주소를 복사해 사파리나 크롬에서 여세요.", location.href); } }
+const inAppBanner = () => IN_APP ? `<div class="inapp noprint"><b>앱 안 화면(카카오톡·네이버 등)에서는 PDF·이미지 저장이 막힐 수 있습니다.</b><br>크롬이나 삼성 인터넷, 사파리로 열면 저장이 잘 됩니다.
+  <p style="margin:8px 0 0;display:flex;gap:8px;flex-wrap:wrap"><button class="sm pri" data-act="open-ext">외부 브라우저로 열기</button><button class="sm" data-act="copy-link">주소 복사</button></p></div>` : "";
+function setOut(files, kind) {
+  closeImgs();
+  S.imgs = { files, urls: files.map(f => URL.createObjectURL(f)), base: files[0].name.replace(/_?\d*\.\w+$/, ""), kind };
+}
 function imgModal() {
-  const im = S.imgs, canShare = !!(navigator.canShare && im.files && navigator.canShare({ files: im.files }));
-  return `<div class="modal noprint"><div class="modal-in"><h2 style="margin:0 0 6px">이미지 ${im.urls.length}장이 만들어졌습니다</h2>
-    <p class="sub">${canShare ? "아래 '사진첩에 저장'을 누르면 공유 창이 열립니다. 아이폰은 '이미지 저장', 안드로이드는 '갤러리' 또는 '사진'을 고르면 사진첩에 들어갑니다." : "이 브라우저는 공유 창을 지원하지 않습니다. 사진을 길게 눌러 '이미지 저장'(아이폰은 '사진에 추가')을 선택하거나 아래 버튼으로 파일을 내려받으세요."}</p>
-    <div class="imgs">${im.urls.map((u, i) => `<img src="${u}" alt="${i + 1}쪽">`).join("")}</div>
-    <p style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">${canShare ? `<button class="pri" data-act="img-share">사진첩에 저장 (공유 창 열기)</button>` : ""}<button data-act="img-dl">파일로 내려받기</button><button data-act="img-close">닫기</button></p></div></div>`;
+  const im = S.imgs, isPdf = im.kind === "pdf", canShare = !!(navigator.canShare && im.files && navigator.canShare({ files: im.files }));
+  const tip = isPdf ? (canShare ? "'저장·공유' 버튼을 누르면 공유 창이 열립니다. '파일에 저장' 또는 '내 파일'을 고르면 휴대폰에 저장됩니다." : "아래 '파일로 내려받기'를 누르세요. 저장이 안 되면 '새 탭에서 열기'를 누른 뒤 브라우저 메뉴의 공유·저장을 쓰세요.")
+    : (canShare ? "'사진첩에 저장' 버튼을 누르면 공유 창이 열립니다. 아이폰은 '이미지 저장', 안드로이드는 '갤러리' 또는 '사진'을 고르면 사진첩에 들어갑니다." : "아래 사진을 길게 눌러 '이미지 저장'(아이폰은 '사진에 추가')을 고르거나, '파일로 내려받기'를 누르세요.");
+  return `<div class="modal noprint"><div class="modal-in"><h2 style="margin:0 0 6px">${isPdf ? "PDF가 만들어졌습니다" : `이미지 ${im.urls.length}장이 만들어졌습니다`}</h2>
+    ${inAppBanner()}<p class="sub">${tip}</p>
+    ${isPdf ? `<p class="note" style="word-break:break-all">${esc(im.files[0].name)}</p>` : `<div class="imgs">${im.urls.map((u, i) => `<img src="${u}" alt="${i + 1}쪽">`).join("")}</div>`}
+    <p style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">${canShare ? `<button class="pri" data-act="img-share">${isPdf ? "저장·공유 (공유 창 열기)" : "사진첩에 저장 (공유 창 열기)"}</button>` : ""}
+    ${im.urls.map((u, i) => `<a class="btn" href="${u}" download="${esc(im.files[i].name)}" style="text-decoration:none">${isPdf ? "파일로 내려받기" : `${i + 1}번 내려받기`}</a>`).join("")}
+    ${isPdf ? `<a class="btn" href="${im.urls[0]}" target="_blank" rel="noopener" style="text-decoration:none">새 탭에서 열기</a>` : ""}
+    <button data-act="img-close">닫기</button></p></div></div>`;
 }
 
 /* ---------- 관리자 화면 ---------- */
@@ -685,13 +778,11 @@ function renderAdmin() {
     return;
   }
   const t = S.admin.tab;
-  const tabs = [["subs", `고교학점제 제출 (${S.admin.subs.length})`], ["rpts", `탐구보고서 제출 (${S.admin.rpts.length})`], ["schools", "학교·편제표"], ["careers", "계열 키워드"], ["data", "백업·설정"]];
+  const tabs = [["subs", `고교학점제 제출 (${S.admin.subs.length})`], ["rpts", `탐구보고서 제출 (${S.admin.rpts.length})`], ["schools", "학교·편제표"], ["data", "백업·설정"]];
   let h = `<div class="tabs">${tabs.map(([k, n]) => `<button class="${t === k ? "on" : ""}" data-act="atab" data-k="${k}">${n}</button>`).join("")}</div>`;
   if (t === "schools") h += S.admin.edit ? schoolEditor() : schoolList();
   if (t === "subs") h += subsView();
   if (t === "rpts") h += rptsView();
-  if (t === "careers") h += `<div class="card"><h2>계열별 연계 과목 키워드</h2><p class="sub">한 줄에 '계열명: 키워드, 키워드' 형식입니다. 과목명에 키워드가 들어 있으면 연계 과목으로 표시합니다. 기본값은 예시이므로 대학별 권장과목 공식 자료를 보고 직접 다듬으세요.</p>
-    <textarea id="careerTxt">${esc(S.careersText)}</textarea><p><button class="pri" data-act="save-careers">저장</button></p></div>`;
   if (t === "data") h += dataView();
   $("#app").innerHTML = h;
 }
@@ -860,7 +951,7 @@ function subCtx(x) {
   const sn = x.snap || [];
   const ranks = ["", "", ""], sel = {}, free = {}, schools = [];
   sn.forEach(p => { const i = (p.rank || 1) - 1; if (p.school) { ranks[i] = p.school.id; sel[p.school.id] = p.sel || {}; schools.push(p.school); } else { ranks[i] = FREE; free[i] = p.free || {}; } });
-  return { stu: { name: x.name, school: x.school, grade: x.grade || "", ban: x.ban || "", no: x.no || "", sno: x.sno || "", sido: x.sido || "", sigungu: x.sigungu || "", track: x.track, major: x.major, date: new Date(x.createdAt).toLocaleDateString("ko-KR") }, ranks, schools, sel, free };
+  return { stu: { name: x.name, school: x.school, grade: x.grade || "", ban: x.ban || "", no: x.no || "", sno: x.sno || "", sido: x.sido || "", sigungu: x.sigungu || "", track: x.track, dept: x.dept || "", major: x.major, date: new Date(x.createdAt).toLocaleDateString("ko-KR") }, ranks, schools, sel, free };
 }
 function withCtx(c, fn) {
   const bk = { stu: S.stu, ranks: S.ranks, schools: S.schools, sel: S.sel, free: S.free };
@@ -903,12 +994,12 @@ function csvOf(items) {
   const picksOf = o => (o && o.picks) || [];
   const has = new Set(); items.forEach(x => (x.result || []).forEach(o => picksOf(o).forEach(p => has.add(String(p).split(" ")[0]))));
   const sems = ["2-1", "2-2", "3-1", "3-2"].concat(["1-1", "1-2"].filter(k => has.has(k))).sort();
-  const head = ["학교", "학년", "반", "번호", "이름", "거주지역", "희망계열", "희망학과"];
+  const head = ["학교", "학년", "반", "번호", "이름", "거주지역", "희망계열", "희망학과(선택)", "희망직업·학과"];
   for (let i = 1; i <= 3; i++) { head.push(`${i}순위 학교`); sems.forEach(k => head.push(`${i}순위 ${semLabel(k).replace(" ", "")}`)); }
   head.push("제출일");
   const rows = [head];
   items.forEach(x => {
-    const r = [x.school, x.grade || "", x.ban || "", x.no || "", x.name, [sidoName(x.sido), x.sigungu].filter(Boolean).join(" "), x.track || "", x.major || ""];
+    const r = [x.school, x.grade || "", x.ban || "", x.no || "", x.name, [sidoName(x.sido), x.sigungu].filter(Boolean).join(" "), x.track || "", x.dept || "", x.major || ""];
     for (let i = 1; i <= 3; i++) {
       const o = (x.result || []).find(y => y.rank === i);
       r.push(o ? o.school : "");
@@ -991,9 +1082,14 @@ async function pdfSession(fn) {
     const fill = ctx => { box.innerHTML = `<div class="card">${jobHtml(ctx)}</div>`; };
     const render = async ctx => {
       fill(ctx);
-      return await html2pdf().set({ margin: [10, 8, 10, 8], image: { type: "jpeg", quality: 0.95 }, html2canvas: { scale: 2, useCORS: true, scrollY: 0 }, jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }, pagebreak: { mode: ["css", "legacy"], avoid: ["tr", "h2", "h3", "h4", ".para"] } }).from(box).outputPdf("blob");
+      return await html2pdf().set({ margin: [10, 8, 10, 8], image: { type: "jpeg", quality: 0.95 }, html2canvas: { scale: 2, useCORS: true, scrollY: 0 }, jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }, pagebreak: { mode: ["css", "legacy"], avoid: ["tr", "h2", "h3", "h4", ".para"], before: [".pg2"] } }).from(box).outputPdf("blob");
     };
-    const canvas = async ctx => { fill(ctx); return await html2pdf().set({ html2canvas: { scale: 2, useCORS: true, scrollY: 0, backgroundColor: "#ffffff" } }).from(box).toCanvas().get("canvas"); };
+    const canvas = async ctx => {
+      fill(ctx);
+      const pgs = [...box.querySelectorAll(".pg")]; const out = [];
+      for (const el of (pgs.length ? pgs : [box])) out.push(await html2pdf().set({ html2canvas: { scale: 2, useCORS: true, scrollY: 0, backgroundColor: "#ffffff" } }).from(el).toCanvas().get("canvas"));
+      return out;
+    };
     return await fn(render, prog, canvas);
   } finally { wrap.remove(); }
 }
@@ -1018,19 +1114,22 @@ async function makePdf(ctxs, name) {
 async function makeImages(ctx, baseName) {
   const blobs = await pdfSession(async (render, prog, canvas) => {
     prog("이미지를 만드는 중입니다…");
-    const c = await canvas(ctx);
-    const pageH = Math.round(c.width * 1.4142), out = [];
-    for (let y = 0; y < c.height; y += pageH) {
-      const h = Math.min(pageH, c.height - y);
-      if (h < 40 && out.length) break;
-      const p = document.createElement("canvas"); p.width = c.width; p.height = pageH;
-      const g = p.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, p.width, p.height); g.drawImage(c, 0, y, c.width, h, 0, 0, c.width, h);
-      out.push(await new Promise(ok => p.toBlob(ok, "image/jpeg", 0.92)));
+    const cs = await canvas(ctx), out = [];
+    for (const c of cs) {
+      const pageH = Math.round(c.width * 1.4142);
+      const step = c.height <= pageH * 1.5 ? c.height : pageH;
+      for (let y = 0; y < c.height; y += step) {
+        const h = Math.min(step, c.height - y);
+        if (h < 40 && out.length) break;
+        const p = document.createElement("canvas"); p.width = c.width; p.height = Math.max(h, step === c.height ? h : pageH);
+        const g = p.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, p.width, p.height); g.drawImage(c, 0, y, c.width, h, 0, 0, c.width, h);
+        out.push(await new Promise(ok => p.toBlob(ok, "image/jpeg", 0.92)));
+      }
     }
     return out;
   });
   const files = blobs.map((b, i) => new File([b], `${baseName}_${i + 1}.jpg`, { type: "image/jpeg" }));
-  S.imgs = { files, urls: files.map(f => URL.createObjectURL(f)), base: baseName };
+  setOut(files, "img");
 }
 function closeImgs() { if (S.imgs) S.imgs.urls.forEach(u => URL.revokeObjectURL(u)); S.imgs = null; }
 async function makeZip(groups, name) {
@@ -1085,8 +1184,6 @@ async function ensureSchools() {
       let seeded = ""; try { seeded = localStorage.getItem("hs_seed2") || ""; } catch (_) {}
       if (!seeded) { for (const x of S.schools.filter(y => y.sample)) await store.del("schools", x.id); for (const x of sampleSchools()) await store.set("schools", x); try { localStorage.setItem("hs_seed2", "1"); } catch (_) {} S.schools = await store.list("schools"); }
     }
-    const st = (await store.list("settings")).find(x => x.id === "careers");
-    if (st) S.careersText = st.text;
   } catch (e) { console.warn(e); S.loadErr = true; }
   S.loaded = true;
 }
@@ -1123,7 +1220,7 @@ document.addEventListener("click", async e => {
   else if (a === "restart") { if (!confirm("작성한 내용과 이 기기에 저장된 임시 저장본을 모두 지우고 처음부터 다시 시작할까요?")) return; Draft.clear(S.prog); resetProg(S.prog); }
   else if (a === "go-admin") { S.view = "admin"; render(); await ensureSchools(); }
   else if (a === "hnext") {
-    if (S.step === 1) { const ok = new Set(S.schools.filter(x => sameRegion(x, S.stu) || x.nationwide).map(x => x.id)); S.ranks = S.ranks.map(v => (isFree(v) || ok.has(v)) ? v : ""); if (!entries().length) { alert("희망 학교를 한 곳 이상 고르세요."); return; } }
+    if (S.step === 1) { const ok = new Set(S.schools.map(x => x.id)); S.ranks = S.ranks.map(v => (isFree(v) || ok.has(v)) ? v : ""); if (!entries().length) { alert("희망 학교를 한 곳 이상 고르세요."); return; } }
     S.step++; S.tab = 0; S.saved = false;
   }
   else if (a === "hprev") { S.step--; }
@@ -1141,15 +1238,22 @@ document.addEventListener("click", async e => {
   else if (a === "fr-add") { freeOf(+d.ri)[d.k].push(""); }
   else if (a === "fr-del") { const arr = freeOf(+d.ri)[d.k]; arr.splice(+d.i, 1); if (!arr.length) arr.push(""); S.saved = false; }
   else if (a === "print") { window.print(); return; }
-  else if (a === "my-pdf") { await makePdf([myJob()]); return; }
+  else if (a === "my-pdf") {
+    const j = myJob(), name = jobName(j.stu, (S.view === "rpt" ? "탐구보고서" : "고교학점제") + ".pdf");
+    if (!TOUCH) { await makePdf([j], name); return; }
+    try { const blob = await pdfSession((r, p) => renderMerged([j], r, p, "", 0, 1)); setOut([new File([blob], name, { type: "application/pdf" })], "pdf"); }
+    catch (err) { alert("PDF를 만들지 못했습니다. 인터넷 연결을 확인하고 다시 눌러 주세요. (" + err.message + ")"); return; }
+  }
   else if (a === "my-img") {
     const j = myJob();
     try { await makeImages(j, jobName(j.stu, S.view === "rpt" ? "탐구보고서" : "고교학점제")); } catch (err) { alert("이미지를 만들지 못했습니다: " + err.message); return; }
   }
   else if (a === "img-share") {
-    try { await navigator.share({ files: S.imgs.files, title: S.imgs.base }); } catch (err) { if (err.name !== "AbortError") alert("공유 창을 열지 못했습니다. 사진을 길게 눌러 저장하거나 '파일로 내려받기'를 이용하세요."); }
+    try { await navigator.share({ files: S.imgs.files, title: S.imgs.base || "가르침에듀 고교학점제" }); } catch (err) { if (err.name !== "AbortError") alert("공유 창을 열지 못했습니다. 사진을 길게 눌러 저장하거나 '파일로 내려받기'를 이용하세요."); }
     return;
   }
+  else if (a === "open-ext") { openExternal(); return; }
+  else if (a === "copy-link") { copyLink(); return; }
   else if (a === "img-dl") { S.imgs.files.forEach((f, i) => setTimeout(() => saveBlob(f, f.name), i * 350)); return; }
   else if (a === "img-close") { closeImgs(); }
   else if (a === "submit") {
@@ -1164,7 +1268,7 @@ document.addEventListener("click", async e => {
           : (c => ({ rank: e.r, school: e.sc.name, total: c.total, need: c.need, picks: c.chosen.map(o => `${o.g}-${o.s} ${o.name}`) }))(calc(e.sc)));
         const snap = es.map(e => e.free ? { rank: e.r, school: null, free: cleanFree(e.ri), sel: {} }
           : { rank: e.r, school: { id: e.sc.id, name: e.sc.name, type: e.sc.type || "", sido: e.sc.sido || "", sigungu: e.sc.sigungu || e.sc.region || "", nationwide: !!e.sc.nationwide, region: e.sc.region || "", totalCredits: e.sc.totalCredits ?? 192, activityCredits: e.sc.activityCredits ?? 18, fixed: e.sc.fixed || [], slots: e.sc.slots || [] }, sel: S.sel[e.sc.id] || {} });
-        await store.set("submissions", { name: st.name.trim(), school: st.school.trim(), grade: st.grade, ban: +st.ban, no: +st.no, sno: `${st.ban}반 ${st.no}번`, sido: st.sido, sigungu: st.sigungu, track: st.track, major: st.major, createdAt: Date.now(), result, snap }); S.saved = true;
+        await store.set("submissions", { name: st.name.trim(), school: st.school.trim(), grade: st.grade, ban: +st.ban, no: +st.no, sno: `${st.ban}반 ${st.no}번`, sido: st.sido, sigungu: st.sigungu, track: st.track, dept: st.dept || "", major: st.major, createdAt: Date.now(), result, snap }); S.saved = true;
       }
     } catch (err) { alert("제출에 실패했습니다: " + err.message); return; }
   }
@@ -1252,7 +1356,6 @@ document.addEventListener("click", async e => {
     S.schools = await store.list("schools"); S.admin.edit = null;
   }
   else if (a === "del-school") { if (confirm("이 학교를 삭제할까요?")) { await store.del("schools", d.id); S.schools = await store.list("schools"); } }
-  else if (a === "save-careers") { await store.set("settings", { id: "careers", text: $("#careerTxt").value }); S.careersText = $("#careerTxt").value; alert("저장했습니다."); }
   else if (a === "reload-subs") { await loadAdminData(); }
   else if (a === "del-sub") { S.admin.preview = null; if (confirm("삭제할까요?")) { await store.del("submissions", d.id); S.admin.subs = S.admin.subs.filter(x => x.id !== d.id); } }
   else if (a === "export") {
@@ -1284,7 +1387,7 @@ document.addEventListener("input", e => {
 });
 document.addEventListener("change", async e => {
   const t = e.target, d = t.dataset;
-  if (d.f !== undefined && t.tagName === "SELECT") { S.stu[d.f] = t.value; if (d.f === "sido") S.stu.sigungu = ""; S.saved = false; render(); autosave(true); }
+  if (d.f !== undefined && t.tagName === "SELECT") { S.stu[d.f] = t.value; if (d.f === "sido") S.stu.sigungu = ""; if (d.f === "track") S.stu.dept = ""; S.saved = false; render(); autosave(true); }
   else if (d.rf !== undefined && t.tagName === "SELECT") { S.rpt[d.rf] = t.value; S.rptSaved = false; render(); autosave(true); }
   else if (d.fl) { const [k, f] = d.fl.split("."); S.admin[k][f] = t.value; render(); }
   else if (d.e === "sido") { render(); }
